@@ -1,13 +1,11 @@
 package org.sai.simulator.flow.model
 
+import javax.persistence.*
 import javax.persistence.Entity
-import javax.persistence.Id
-import javax.persistence.ManyToOne
-import javax.persistence.Table
 
 @Entity
-@Table(name = "ZONE")
-data class Zone(
+@Table(name = "ZONE_GROUP")
+data class ZoneGroup(
 
     @Id
     val id: Long = 0,
@@ -15,6 +13,5 @@ data class Zone(
     val description: String = "",
     val locationPolygon: String = "",
     val maxCapacity: Int = 10000,
-    @ManyToOne(optional = true)
-    val zoneGroup: ZoneGroup? = null,
+    val end: Boolean = false,
 )

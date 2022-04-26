@@ -2,12 +2,12 @@ package org.sai.simulator.flow.listeners
 
 import org.sai.simulator.flow.model.CalculateTrafficCommand
 import org.sai.simulator.flow.model.Traffic
-import org.sai.simulator.flow.model.TrafficCalculatedEvent
 import org.sai.simulator.flow.repository.TrafficRepository
 import org.sai.simulator.flow.service.realtime.DefaultRealTimeDataService
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
+import java.time.LocalDateTime
 import kotlin.math.roundToLong
 import kotlin.random.Random
 
@@ -44,7 +44,7 @@ class CalculateTrafficCommandListener(
             trafficCountHalts =
                 ((hp.percentageTraffic / 100.0) * trafficCount).roundToLong()
             val haltTimeInCurrentZone = hp.haltTimeInMinutes
-            //println(" ${hp.percentageTraffic}% of $trafficCount === $trafficCountHalts halts at ===== $haltTimeInCurrentZone ==== ${hp.station.name}  capacity ${hp.station.capacity}")
+            println(" ${hp.percentageTraffic}% of $trafficCount === $trafficCountHalts halts at ===== $haltTimeInCurrentZone ==== ${hp.station.name}  capacity ${hp.station.capacity}")
             if (hp.station.capacity >= trafficCountHalts) {
                 travelTimes.forEach { tt ->
                     val futuretime = tt.travelTimeInMinutes + haltTimeInCurrentZone
@@ -88,14 +88,15 @@ class CalculateTrafficCommandListener(
                     val residue = (count % capacity)
 
                     // For each batch,
+                    var seqTime: LocalDateTime? = null
                     for (i in 1..batches) {
-                        val futuretime =
+                        seqTime =
                             calculateTrafficCommand.time.plusMinutes(tt.travelTimeInMinutes + (i * haltTimeInCurrentZone))
                                 .plusMinutes(Random.nextLong(hp.station.randomBufferTimeInMinutes))
                         // Traffic that goes to the next zone.
                         trafficRepository.saveAndFlush(
                             Traffic(
-                                dateTime = futuretime,
+                                dateTime = seqTime,
                                 job = calculateTrafficCommand.job,
                                 zone = nextZone,
                                 trafficCount = capacity.toLong()
@@ -104,13 +105,38 @@ class CalculateTrafficCommandListener(
                         // Traffic that should be removed from the current zone.
                         trafficRepository.saveAndFlush(
                             Traffic(
-                                dateTime = futuretime,
+                                dateTime = seqTime,
                                 job = calculateTrafficCommand.job,
                                 zone = calculateTrafficCommand.zone,
                                 trafficCount = -(capacity.toLong())
                             )
                         )
                     }
+
+                    // Residual.
+                    seqTime =
+                        seqTime!!.plusMinutes(tt.travelTimeInMinutes + (haltTimeInCurrentZone))
+                            .plusMinutes(Random.nextLong(hp.station.randomBufferTimeInMinutes))
+
+                    // Traffic that goes to the next zone.
+                    trafficRepository.saveAndFlush(
+                        Traffic(
+                            dateTime = seqTime,
+                            job = calculateTrafficCommand.job,
+                            zone = nextZone,
+                            trafficCount = capacity.toLong()
+                        )
+                    )
+                    // Traffic that should be removed from the current zone.
+                    trafficRepository.saveAndFlush(
+                        Traffic(
+                            dateTime = seqTime,
+                            job = calculateTrafficCommand.job,
+                            zone = calculateTrafficCommand.zone,
+                            trafficCount = -(capacity.toLong())
+                        )
+                    )
+
                 }
 
             }
@@ -141,11 +167,5 @@ class CalculateTrafficCommandListener(
                 )
             )
         }
-        applicationEventPublisher.publishEvent(
-            TrafficCalculatedEvent(
-                job = calculateTrafficCommand.job,
-                calculateTrafficCommand.time
-            )
-        )
     }
 }

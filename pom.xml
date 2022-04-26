@@ -53,11 +53,13 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.mitchtalmadge/ascii-data -->
 		<dependency>
-			<groupId>org.roaringbitmap</groupId>
-			<artifactId>RoaringBitmap</artifactId>
-			<version>0.9.26</version>
+			<groupId>com.mitchtalmadge</groupId>
+			<artifactId>ascii-data</artifactId>
+			<version>1.4.0</version>
 		</dependency>
+
 
 	</dependencies>
 

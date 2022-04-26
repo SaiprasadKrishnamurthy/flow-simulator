@@ -1,10 +1,7 @@
 package org.sai.simulator.flow.bootstrap
 
 import org.sai.simulator.flow.model.*
-import org.sai.simulator.flow.repository.JobRepository
-import org.sai.simulator.flow.repository.PathRepository
-import org.sai.simulator.flow.repository.StationGroupRepository
-import org.sai.simulator.flow.repository.ZoneRepository
+import org.sai.simulator.flow.repository.*
 import org.sai.simulator.flow.service.scheduler.ClockTickerTask
 import org.sai.simulator.flow.service.scheduler.TrafficReporterTask
 import org.springframework.boot.CommandLineRunner
@@ -22,12 +19,17 @@ class Bootstrap {
         applicationContext: ApplicationContext,
         jobRepository: JobRepository,
         zoneRepository: ZoneRepository,
+        zoneGroupRepository: ZoneGroupRepository,
         pathRepository: PathRepository,
         stationGroupRepository: StationGroupRepository
     ) = CommandLineRunner {
-        val a = Zone(id = 1, "Zone A", "Zone A", "", 1000)
-        val b = Zone(id = 2, "Zone B", "Zone B", "", 1000)
-        val c = Zone(id = 3, "Zone C", "Zone C", "", 1000, end = true)
+        val zg1 = ZoneGroup(id = 1, "Checkin", "Checkin", "", 1000)
+        val zg2 = ZoneGroup(id = 2, "Security", "Security", "", 1000)
+        val zg3 = ZoneGroup(id = 3, "Gates", "Gates", "", 1000, end = true)
+        val a = Zone(id = 1, "Zone A", "Zone A", "", 1000, zoneGroup = zg1)
+        val b = Zone(id = 2, "Zone B", "Zone B", "", 1000, zoneGroup = zg2)
+        val c = Zone(id = 3, "Zone C", "Zone C", "", 1000, zoneGroup = zg3)
+        zoneGroupRepository.saveAllAndFlush(listOf(zg1, zg2, zg3))
         zoneRepository.saveAllAndFlush(listOf(a, b, c))
         val path1 = Path(from = a, to = b)
         val path2 = Path(from = b, to = c)
@@ -50,7 +52,7 @@ class Bootstrap {
             fromTime = LocalDateTime.now(),
             toTime = LocalDateTime.now().plusMinutes(10),
             clockTickSpeed = 1, // event listening speed in seconds. Every 'n' seconds the clock tick event is emitted.
-            processingDuration = 5, // the interval in minutes. eg: 5, 10, 15, 20 ...etc minute (if the interval is 5).
+            processingDuration = 3, // the interval in minutes. eg: 5, 10, 15, 20 ...etc minute (if the interval is 5).
             reportFrequency = 2L
         )
 
